@@ -7,5 +7,12 @@ namespace lista_presentes.Entities
     {
         [Column("descricao")]
         public string Descricao { get; set; } = string.Empty;
+
+        [Column("link")]
+        public string? Link { get; set; }
+
+        [Column("id_usuario")]
+        public int UsuarioId { get; set; }
+        public Usuario? Usuario { get; set; }
     }
 }

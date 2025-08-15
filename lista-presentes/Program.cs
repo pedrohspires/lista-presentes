@@ -16,6 +16,7 @@ builder.Services.AddDbContext<MyDbContext>(options =>
 
 // Repositórios
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IListaRepository, ListaRepository>();
 
 var app = builder.Build();
 
