@@ -2,6 +2,7 @@
 using lista_presentes.DTOs.Usuario;
 using lista_presentes.Entities;
 using lista_presentes.Repositories.Interfaces;
+using lista_presentes.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace lista_presentes.Repositories.Implementations

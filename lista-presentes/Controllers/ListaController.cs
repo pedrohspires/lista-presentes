@@ -1,6 +1,8 @@
 ﻿using lista_presentes.DTOs;
 using lista_presentes.DTOs.Lista;
+using lista_presentes.DTOs.Usuario;
 using lista_presentes.Entities;
+using lista_presentes.Repositories.Implementations;
 using lista_presentes.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -92,6 +94,24 @@ namespace lista_presentes.Controllers
             try
             {
                 var result = await _listaRepository.DeleteAsync(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("ByUUID/{uuid}")]
+        public async Task<ActionResult<ListaListagemDTO>> GetByUUID(string uuid)
+        {
+            try
+            {
+                var result = await _listaRepository.GetListaByUUIDAsync(uuid);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)

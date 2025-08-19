@@ -1,5 +1,6 @@
 ﻿using lista_presentes.DTOs;
 using lista_presentes.DTOs.Lista;
+using lista_presentes.DTOs.Usuario;
 using lista_presentes.Entities;
 using lista_presentes.Repositories.Interfaces;
 using lista_presentes.Utils;
@@ -23,9 +24,9 @@ namespace lista_presentes.Repositories.Implementations
             {
                 Id = lista.Id,
                 Descricao = lista.Descricao,
-                Link = lista.Link,
+                UUID = Hash.GetUUIDHashCode(lista.Id).ToString(),
                 UsuarioId = lista.UsuarioId,
-                Usuario = lista.Usuario != null ? new DTOs.Usuario.UsuarioListagemDTO
+                Usuario = lista.Usuario != null ? new UsuarioListagemDTO
                 {
                     Id = lista.Usuario.Id,
                     Nome = lista.Usuario.Nome,
@@ -39,7 +40,11 @@ namespace lista_presentes.Repositories.Implementations
 
         public async Task<ListaListagemDTO> GetListaByIdAsync(int id)
         {
-            var lista = await _dbContext.Lista.FindAsync(id);
+            var lista = await _dbContext.Lista
+                .Include(x => x.Usuario)
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+
             if (lista == null)
                 throw new KeyNotFoundException("Lista não encontrada!");
 
@@ -48,7 +53,7 @@ namespace lista_presentes.Repositories.Implementations
 
         public async Task<List<ListaListagemDTO>> GetListaListagemAsync(ListaFiltrosListagemDTO filtros)
         {
-            var dbQuery = _dbContext.Lista.AsQueryable();
+            var dbQuery = _dbContext.Lista.Include(x => x.Usuario).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filtros.Pesquisa))
             {
@@ -57,7 +62,7 @@ namespace lista_presentes.Repositories.Implementations
                                              EF.Functions.Like(x.Usuario.Nome.ToLower(), pesquisa));
             }
 
-            if(filtros.UsuarioId != null)
+            if (filtros.UsuarioId != null)
                 dbQuery = dbQuery.Where(x => x.UsuarioId == filtros.UsuarioId);
 
             var lista = await dbQuery
@@ -82,7 +87,7 @@ namespace lista_presentes.Repositories.Implementations
             else
             {
                 var usuario = await _dbContext.Usuario.FindAsync(lista.UsuarioId);
-                if(usuario == null)
+                if (usuario == null)
                     throw new KeyNotFoundException("Usuário proprietário não encontrado!");
             }
         }
@@ -99,10 +104,6 @@ namespace lista_presentes.Repositories.Implementations
             await _dbContext.Lista.AddAsync(novaLista);
             await _dbContext.SaveChangesAsync();
 
-            var uuidById = Hash.GetUUIDHashCode(novaLista.Id);
-            novaLista.Link = $"/lista?proprietario={uuidById}";
-
-            await _dbContext.SaveChangesAsync();
             return novaLista.Id;
         }
 
@@ -131,6 +132,20 @@ namespace lista_presentes.Repositories.Implementations
             _dbContext.Lista.Remove(lista);
             await _dbContext.SaveChangesAsync();
             return id;
+        }
+
+        public async Task<ListaListagemDTO> GetListaByUUIDAsync(string uuid)
+        {
+            var listaListas = await _dbContext.Lista.Include(x => x.Usuario).ToListAsync();
+
+            var lista = listaListas
+                .Where(x => Hash.GetUUIDHashCode(x.Id).ToString() == uuid)
+                .FirstOrDefault();
+
+            if (lista == null)
+                throw new KeyNotFoundException("Lista não encontrado!");
+
+            return ConvertToDTO(lista);
         }
     }
 }

@@ -18,7 +18,20 @@ builder.Services.AddDbContext<MyDbContext>(options =>
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IListaRepository, ListaRepository>();
 
+// Cors
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowViteReact", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // ou "*", mas não recomendado em produção
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowViteReact");
 
 if (app.Environment.IsDevelopment())
 {
