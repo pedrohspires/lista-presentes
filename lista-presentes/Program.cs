@@ -17,6 +17,7 @@ builder.Services.AddDbContext<MyDbContext>(options =>
 // Repositórios
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IListaRepository, ListaRepository>();
+builder.Services.AddScoped<ITipoChavePixRepository, TipoChavePixRepository>();
 
 // Cors
 builder.Services.AddCors(options =>

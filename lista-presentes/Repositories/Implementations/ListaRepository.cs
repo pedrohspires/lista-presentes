@@ -1,5 +1,6 @@
 ﻿using lista_presentes.DTOs;
 using lista_presentes.DTOs.Lista;
+using lista_presentes.DTOs.TipoChavePix;
 using lista_presentes.DTOs.Usuario;
 using lista_presentes.Entities;
 using lista_presentes.Repositories.Interfaces;
@@ -33,6 +34,16 @@ namespace lista_presentes.Repositories.Implementations
 
                     DataUltimaAlteracao = lista.Usuario.DataEdicao != null ? lista.Usuario.DataEdicao.Value : lista.Usuario.DataCadastro
                 } : null,
+                ValorPix = lista.ValorPix,
+                ChavePix = lista.ChavePix,
+                TipoChavePixId = lista.TipoChavePixId,
+                TipoChavePix = lista.TipoChavePix != null ? new TipoChavePixListagemDTO
+                {
+                    Id = lista.TipoChavePix.Id,
+                    Descricao = lista.TipoChavePix.Descricao,
+
+                    DataUltimaAlteracao = lista.TipoChavePix.DataEdicao != null ? lista.TipoChavePix.DataEdicao.Value : lista.TipoChavePix.DataCadastro
+                } : null,
 
                 DataUltimaAlteracao = lista.DataEdicao != null ? lista.DataEdicao.Value : lista.DataCadastro
             };
@@ -42,6 +53,7 @@ namespace lista_presentes.Repositories.Implementations
         {
             var lista = await _dbContext.Lista
                 .Include(x => x.Usuario)
+                .Include(x => x.TipoChavePix)
                 .Where(x => x.Id == id)
                 .FirstOrDefaultAsync();
 
@@ -53,7 +65,10 @@ namespace lista_presentes.Repositories.Implementations
 
         public async Task<List<ListaListagemDTO>> GetListaListagemAsync(ListaFiltrosListagemDTO filtros)
         {
-            var dbQuery = _dbContext.Lista.Include(x => x.Usuario).AsQueryable();
+            var dbQuery = _dbContext.Lista
+                .Include(x => x.Usuario)
+                .Include(x => x.TipoChavePix)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filtros.Pesquisa))
             {
@@ -64,6 +79,9 @@ namespace lista_presentes.Repositories.Implementations
 
             if (filtros.UsuarioId != null)
                 dbQuery = dbQuery.Where(x => x.UsuarioId == filtros.UsuarioId);
+
+            if (filtros.TipoChavePixId != null)
+                dbQuery = dbQuery.Where(x => x.TipoChavePixId == filtros.TipoChavePixId);
 
             var lista = await dbQuery
                 .OrderByDescending(x => x.Id)
@@ -90,6 +108,15 @@ namespace lista_presentes.Repositories.Implementations
                 if (usuario == null)
                     throw new KeyNotFoundException("Usuário proprietário não encontrado!");
             }
+
+            if (lista.TipoChavePixId == null)
+                throw new Exception("Informe o 'Tipo' da chave pix!");
+            else
+            {
+                var tipoChavePix = await _dbContext.TipoChavePix.FindAsync(lista.TipoChavePixId);
+                if (tipoChavePix == null)
+                    throw new KeyNotFoundException("Tipo Chave Pix não encontrado!");
+            }
         }
 
         public async Task<int> CreateListaAsync(ListaCadastroDTO lista)
@@ -99,6 +126,9 @@ namespace lista_presentes.Repositories.Implementations
             var novaLista = new Lista();
             novaLista.Descricao = lista.Descricao;
             novaLista.UsuarioId = lista.UsuarioId.Value;
+            novaLista.ChavePix = lista.ChavePix ?? "";
+            novaLista.ValorPix = lista.ValorPix ?? 0;
+            novaLista.TipoChavePixId = lista.TipoChavePixId.Value;
             novaLista.DataCadastro = DateTime.UtcNow;
 
             await _dbContext.Lista.AddAsync(novaLista);
@@ -117,6 +147,9 @@ namespace lista_presentes.Repositories.Implementations
 
             lista.Descricao = listaDTO.Descricao;
             lista.UsuarioId = listaDTO.UsuarioId.Value;
+            lista.ChavePix = listaDTO.ChavePix ?? "";
+            lista.ValorPix = listaDTO.ValorPix ?? 0;
+            lista.TipoChavePixId = listaDTO.TipoChavePixId.Value;
             lista.DataEdicao = DateTime.UtcNow;
 
             await _dbContext.SaveChangesAsync();
@@ -136,7 +169,10 @@ namespace lista_presentes.Repositories.Implementations
 
         public async Task<ListaListagemDTO> GetListaByUUIDAsync(string uuid)
         {
-            var listaListas = await _dbContext.Lista.Include(x => x.Usuario).ToListAsync();
+            var listaListas = await _dbContext.Lista
+                .Include(x => x.TipoChavePix)
+                .Include(x => x.Usuario)
+                .ToListAsync();
 
             var lista = listaListas
                 .Where(x => Hash.GetUUIDHashCode(x.Id).ToString() == uuid)

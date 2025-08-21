@@ -8,6 +8,7 @@ namespace lista_presentes
         public DbSet<Usuario> Usuario { get; set; }
         public DbSet<Lista> Lista { get; set; }
         public DbSet<ListaUsuario> ListaUsuario { get; set; }
+        public DbSet<TipoChavePix> TipoChavePix { get; set; }
 
         public MyDbContext(DbContextOptions options) : base(options)
         {
